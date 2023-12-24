@@ -28,10 +28,15 @@ jobs:
         echo "Fin de login"
 
     - name: Build Docker Image
-      run: docker build -t manulc/docker-nest-graphql:0.0.1 .
+      run: |
+        docker build -t manulc/docker-nest-graphql:0.0.1 .
+        # Otra opción es usar el comando "docket tag manulc/docker-nest-graphql:0.0.1 manulc/docker-nest-graphql"
+        docker build -t manulc/docker-nest-graphql .
 
     - name: Push Docker Image
-      run: docker push manulc/docker-nest-graphql:0.0.1
+      run: |
+        docker push manulc/docker-nest-graphql:0.0.1
+        docker push manulc/docker-nest-graphql
       
     #- name: Build the Docker image
       #run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
