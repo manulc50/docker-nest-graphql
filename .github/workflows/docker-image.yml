@@ -15,38 +15,45 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
+      # Configura la etapa
       with:
         fetch-depth: 0
         
     - name: Git Semantic Version
       uses: PaulHatch/semantic-version@v4.0.3
       with:
+        # Cada vez que haya un commit con la expresión "major:" en el comentario, se incrementará la versión "major" en una unidad
         major_pattern: "major:"
+        # Cada vez que haya un commit con la expresión "feat:" en el comentario, se incrementará la versión "minor" en una unidad
+         # Si no hay ninguna expresión "major:" o "feat" en el comentario, se incrementará la versión "patch" en una unidad
         minor_pattern: "feat:"
+        # Formato del versionado
         format: "${major}.${minor}.${patch}-prerelease${increment}"
+      # Damos un identificador a la etapa
       id: version
 
     - name: Docker Login
       env:
+        # Estas variables se establecen a partir de los repositorios de tipo "secret" configurados en las configuraciones de este repositorio
         DOCKER_USER: ${{ secrets.DOCKER_USER }}
         DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-        NEW_VERSION: ${{ steps.version.outputs.version }}
       run: |
         echo "Iniciando login..."
         docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
         echo "Fin de login"
-        echo "Nueva versión: $NEW_VERSION!!!!"
 
-    #- name: Build Docker Image
-      #run: |
-        #docker build -t manulc/docker-nest-graphql:0.0.1 .
+    - name: Build Docker Image
+      env:
+        # Obtenemos la nueva versión a partir de la salida de la etapa con id "version"
+        NEW_VERSION: ${{ steps.version.outputs.version }}
+      run: |
+        docker build -t manulc/docker-nest-graphql:$NEW_VERSION .
         # Otra opción es usar el comando "docket tag manulc/docker-nest-graphql:0.0.1 manulc/docker-nest-graphql"
-        #docker build -t manulc/docker-nest-graphql .
+        docker build -t manulc/docker-nest-graphql .
 
-    #- name: Push Docker Image
-      #run: |
-        #docker push manulc/docker-nest-graphql:0.0.1
-        #docker push manulc/docker-nest-graphql
-      
-    #- name: Build the Docker image
-      #run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+    - name: Push Docker Image
+      env:
+        NEW_VERSION: ${{ steps.version.outputs.version }}
+      run: |
+        docker push manulc/docker-nest-graphql:$NEW_VERSION
+        docker push manulc/docker-nest-graphql
